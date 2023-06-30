@@ -1,0 +1,29 @@
+version: "3.0"
+
+services:
+  db:
+    container_name: "db"
+    image: postgres:15
+    restart: always
+    command:
+      - "postgres"
+      - "-c"
+      - "port=5450"
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - PGDATA:/var/lib/postgresql/data/pgdata
+    ports:
+      - "5450:5450"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - custom
+
+networks:
+  custom:
+    driver: bridge
+
+volumes:
+  db_data:
