@@ -17,9 +17,6 @@ LETTER_MATCH_PATTERN = re.compile(r"^[а-яА-Яa-zA-Z\-]+$")
 class ShowDiscipline(PydanticBaseModel):
     dis_id: int
     name: str
-    #
-    # def __repr__(self):
-    #     return f"PYDANTIC dis_id: {self.dis_id}, name: {self.name}"
 
 
 class CreateDiscipline(BaseModel):
@@ -34,14 +31,6 @@ class CreateDiscipline(BaseModel):
         return value
 
 
-class DeleteDisciplineResponse(BaseModel):
-    dis_id: int
-
-
-class UpdateDisciplineResponse(BaseModel):
-    dis_id: int
-
-
 class UpdateDisciplineRequest(BaseModel):
     name: constr(max_length=500)
 
@@ -52,5 +41,4 @@ class UpdateDisciplineRequest(BaseModel):
                 status_code=422, detail="Имя должно состоять только из букв"
             )
         return value
-
 
