@@ -1,4 +1,4 @@
-from ..base_model import PydanticBaseModel
+from schemas.base_model import PydanticBaseModel
 
 from fastapi import HTTPException
 from pydantic import BaseModel
@@ -31,7 +31,7 @@ class CreateDiscipline(BaseModel):
         return value
 
 
-class UpdateDisciplineRequest(BaseModel):
+class UpdateDiscipline(BaseModel):
     name: constr(max_length=500)
 
     @validator("name")
