@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import List
 
 from fastapi import APIRouter
@@ -11,6 +12,9 @@ import crud
 
 from data_base.session import get_db
 
+import uuid
+
+import time
 
 dis_router = APIRouter()
 
@@ -34,6 +38,23 @@ async def create_discipline(
 
 
 @dis_router.get("/get-disciplines-list", response_model=List[schemas.ShowDiscipline])
+async def get_disciplines(
+        db: AsyncSession = Depends(get_db),
+        skip: int | None = None,
+        limit: int | None = None
+) -> List[schemas.ShowDiscipline]:
+    """
+    Получение списка дисциплин
+    - **skip** - смещение
+    - **limit** - количество записей
+    """
+    try:
+        discipline_list = await crud.discipline.get_multi(db, skip=skip, limit=limit)
+        return [schemas.ShowDiscipline(dis_id=item.dis_id, name=item.name) for item in discipline_list]
+    except IntegrityError as err:
+        raise HTTPException(status_code=503, detail=f"Ошибка выгрузки записей: {err.orig}")
+    except Exception as err:
+        raise HTTPException(status_code=503, detail=f"ERROR: {err}")@dis_router.get("/get-disciplines-list", response_model=List[schemas.ShowDiscipline])
 async def get_disciplines(
         db: AsyncSession = Depends(get_db),
         skip: int | None = None,
@@ -97,3 +118,42 @@ async def update_discipline(
     except Exception as err:
         raise HTTPException(status_code=503, detail=f"ERROR: {err}")
 
+
+def prepare_data(num: int) -> List[schemas.CreateDiscipline]:
+    return [schemas.CreateDiscipline(name=str(uuid.uuid4())) for _ in range(num)]
+
+
+@dis_router.post('/create-test')
+async def start_create_test(
+        num: int,
+        db: AsyncSession = Depends(get_db)):
+    insert_data = prepare_data(num)
+
+    start_time = time.time()
+    ins_num = await create_disciplines(insert_data, db)
+    end_time = time.time()
+    execution_time = end_time - start_time
+    return {
+        'code': 200,
+        'number of records inserted': ins_num,
+        'time of execution': execution_time
+    }
+
+
+@dis_router.post("/post-create-dis-multi/{version}")
+async def create_disciplines(
+        disciplines_list: List[schemas.CreateDiscipline],
+        db: AsyncSession = Depends(get_db),
+) -> int:
+    """
+       Create an item with all the information:
+
+       - **name**: each discipline must have a name
+    """
+    try:
+        return await crud.discipline.create_multi(db=db, objs_in=disciplines_list)
+
+    except IntegrityError as err:
+        raise HTTPException(status_code=503, detail=f"Ошибка создания записи: {err.orig}")
+    except Exception as err:
+        raise HTTPException(status_code=503, detail=f"ERROR: {err}")

@@ -176,8 +176,13 @@ class TeachProgram(Base):
     dis_dis_id = Column(ForeignKey('disciplines.dis_id'), nullable=False, index=True)
     tpt_tpt_id = Column(ForeignKey('teach_prog_types.tpt_id'), nullable=False, index=True)
 
-    dis_dis = relationship('Discipline')
-    tpt_tpt = relationship('TeachProgType')
+    dis_dis = relationship('Discipline', lazy="joined")
+    tpt_tpt = relationship('TeachProgType', lazy="joined")
+
+    def __repr__(self):
+        return f"<TeachProgram: tpr_id={self.tpr_id}, confirm_date={self.confirm_date}, status={self.status}, protocol={self.protocol} " \
+               f"practice_form={self.practice_form}, practice_schedule={self.practice_schedule}, info={self.info}, " \
+               f"dis_dis_id={self.dis_dis_id}, tpt_tpt_id={self.tpt_tpt_id}, dis_dis={self.dis_dis}, tpt_tpt={self.tpt_tpt} >"
 
 
 class TwForYear(Base):

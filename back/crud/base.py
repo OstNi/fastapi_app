@@ -1,12 +1,15 @@
+import asyncio
 from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Sequence
 
 from fastapi.encoders import jsonable_encoder
-from fastapi import HTTPException
+import concurrent.futures
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, Row, RowMapping
 from sqlalchemy import exc
 from sqlalchemy import delete as sqlalchemy_delete
 from sqlalchemy import update as sqlalchemy_update
+from sqlalchemy import insert as sqlalchemy_insert
+
 from pydantic import BaseModel
 
 from data_base.db_models import Base
@@ -65,6 +68,19 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         await db.commit()
         await db.refresh(db_obj)
         return db_obj
+
+    @exc_raiser
+    async def create_multi(self, db: AsyncSession, *, objs_in: List[CreateSchemaType], batch_size: int = 1_000):
+        values = [jsonable_encoder(obj_in) for obj_in in objs_in]
+        try:
+            async with db.begin():
+                for i in range(0, len(values), batch_size):
+                    batch = values[i:i + batch_size]
+                    await db.execute(sqlalchemy_insert(self.model).values(batch))
+
+            return len(values)
+        except exc.IntegrityError as err:
+            raise err
 
     @exc_raiser
     async def update(
